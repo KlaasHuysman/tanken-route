@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tanken Dijon – Les Menuires</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;height:100%;font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:#14171f;background:#fff}
+#app{display:grid;grid-template-columns:380px minmax(0,1fr);height:100%}
+#side{display:flex;flex-direction:column;border-right:1px solid #d9dce3;overflow:hidden}
+header{padding:14px 16px 10px;background:#1240e0;color:#fff}
+header h1{margin:0 0 2px;font-size:18px;line-height:1.2}
+header p{margin:0;font-size:12px;opacity:.9}
+.ctl{padding:10px 16px;border-bottom:1px solid #e3e6ec;display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.ctl label{font-size:12px;color:#4a5060;display:flex;flex-direction:column;gap:3px}
+.ctl .full{grid-column:1/-1}
+.ctl .row{flex-direction:row;align-items:center;gap:6px;color:#14171f;font-size:13px}
+select,input[type=text],input[type=number]{font:inherit;font-size:16px;padding:6px 8px;border:1px solid #c4c9d4;border-radius:4px;background:#fff;color:#14171f;width:100%}
+input[type=range]{width:100%;margin:6px 0 0;accent-color:#1240e0}
+#maxv{color:#14171f;font-variant-numeric:tabular-nums}
+button{font:inherit;font-weight:600;min-height:44px;padding:7px 12px;border:0;border-radius:4px;background:#1240e0;color:#fff;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+#stats{padding:8px 16px;background:#eef2ff;font-size:13px;border-bottom:1px solid #d9dce3}
+#stats b{font-variant-numeric:tabular-nums}
+#status{padding:6px 16px;font-size:12px;color:#4a5060}
+#status.err{color:#b00020;font-weight:600}
+#list{overflow:auto;flex:1}
+.st{padding:8px 16px;border-bottom:1px solid #eceef2;cursor:pointer;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:2px 10px;align-items:start}
+.st:hover,.st.sel{background:#f3f5fb}
+.km{font-variant-numeric:tabular-nums;color:#4a5060;font-size:12px;width:44px;padding-top:2px}
+.nm{font-weight:600}
+.ad{grid-column:2/4;font-size:12px;color:#4a5060}
+.pr{font-variant-numeric:tabular-nums;font-weight:700;padding:1px 6px;border-radius:3px;color:#fff;white-space:nowrap}
+.old{color:#b00020;font-weight:600}
+.tag{display:inline-block;font-size:11px;padding:0 4px;border-radius:3px;background:#e3e6ec;color:#14171f;margin-left:4px;font-weight:600}
+.tag.a{background:#1240e0;color:#fff}
+#map{height:100%}
+.pin{background:none;border:0}
+.pin span{display:inline-block;transform:translate(-50%,-50%);padding:1px 5px;border-radius:4px;color:#fff;font:700 12px/1.4 system-ui,sans-serif;white-space:nowrap;border:1.5px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.45)}
+.pin.top span{outline:2px solid #14171f}
+.leaflet-popup-content{font-size:13px;line-height:1.45}
+.leaflet-popup-content table{border-collapse:collapse;margin-top:4px}
+.leaflet-popup-content td{padding:1px 8px 1px 0;font-variant-numeric:tabular-nums}
+.legend{background:#fff;padding:6px 8px;border-radius:4px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+.legend i{display:inline-block;width:120px;height:8px;background:linear-gradient(90deg,#1a9641,#a6d96a,#fdae61,#d7191c);vertical-align:middle;margin:0 4px}
+.fuels{display:flex;flex-wrap:wrap;gap:6px}.fuels label{flex-direction:row!important;align-items:center;gap:6px!important;border:1px solid #c4c9d4;border-radius:6px;padding:0 10px;min-height:40px;color:#14171f!important;font-size:14px!important;cursor:pointer}.fuels label:has(input:checked){background:#1240e0;border-color:#1240e0;color:#fff!important}.fuels input{accent-color:#fff}
+details.full summary{cursor:pointer;font-size:13px;color:#1240e0;min-height:32px;display:flex;align-items:center}details.full .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ad a{color:#1240e0;font-weight:600;margin-right:10px;display:inline-block;padding:4px 0}
+foot{display:block;padding:8px 16px;font-size:11px;color:#4a5060;border-top:1px solid #e3e6ec}
+@media(max-width:760px){html,body{height:auto}#app{display:block;height:auto}#map{height:55vh;height:55dvh;position:sticky;top:0;z-index:1}#side{border-right:0;overflow:visible;position:relative;z-index:2;background:#fff}#list{overflow:visible}.st{padding:10px 16px}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="side">
+    <header>
+      <h1>Brandstof langs je route</h1>
+      <p>Live data van prix-carburants.gouv.fr · route via OSRM</p>
+    </header>
+    <div class="ctl">
+      <details class="full"><summary>Vertrek en bestemming aanpassen</summary><div class="two">
+      <label>Vertrek (lat, lon)<input type="text" id="from" value="47.3220, 5.0415"></label>
+      <label>Bestemming (lat, lon)<input type="text" id="to" value="45.3238, 6.5372"></label></div></details>
+      <div class="full"><label style="margin-bottom:4px">Brandstof (meerdere mogelijk – per station telt de goedkoopste)</label>
+      <div class="fuels" id="fuels">
+        <label><input type="checkbox" value="e10" checked>E10</label>
+        <label><input type="checkbox" value="sp95" checked>SP95</label>
+        <label><input type="checkbox" value="sp98">SP98</label>
+        <label><input type="checkbox" value="gazole">Diesel</label>
+        <label><input type="checkbox" value="e85">E85</label>
+        <label><input type="checkbox" value="gplc">GPL</label>
+      </div></div>
+      <label class="full">Straal rond route (km)<input type="number" id="buf" value="4" min="0.5" max="15" step="0.5"></label>
+      <label class="full">Maximale prijs: <b id="maxv">alle prijzen</b><input type="range" id="maxp" min="0" max="1" step="0.001" value="1" disabled></label>
+      <label class="row full"><input type="checkbox" id="onlySold" checked> Alleen stations die een gekozen brandstof verkopen</label>
+      <label class="row full"><input type="checkbox" id="noAuto"> Autosnelwegstations (aires) verbergen</label>
+      <div class="full"><button id="go">Route en prijzen ophalen</button></div>
+    </div>
+    <div id="stats">–</div>
+    <div id="status">Bezig met laden…</div>
+    <div id="list"></div>
+    <foot>Afstand = kortste afstand in vogelvlucht tot de route, niet de omrijafstand. "A" = station aan autosnelweg. Prijzen ouder dan 3 dagen staan in het rood. Controleer altijd de prijs aan de pomp.</foot>
+  </div>
+  <div id="map"></div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+{
+const API='https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/exports/json';
+const OSRM='https://router.project-osrm.org/route/v1/driving/';
+const R=6371.0088, RAD=Math.PI/180;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const FUELS={sp95:'SP95',e10:'E10',sp98:'SP98',gazole:'Gazole',e85:'E85',gplc:'GPL'};
+
+const map=L.map('map',{preferCanvas:false}).setView([46.3,5.8],8);
+const osm=L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>-bijdragers'}).addTo(map);
+const esri=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',{maxZoom:19,attribution:'Tiles &copy; Esri'});
+L.control.layers({'OpenStreetMap':osm,'Esri stratenkaart':esri}).addTo(map);
+const legend=L.control({position:'bottomright'});
+legend.onAdd=()=>{const d=L.DomUtil.create('div','legend');d.id='legend';d.innerHTML='Goedkoop<i></i>Duur';return d};
+legend.addTo(map);
+
+let routeLayer=null, stationLayer=L.layerGroup().addTo(map), route=null, stations=null, markers={}, maxPrice=null;
+
+function parseLL(s){const m=s.split(/[,;\s]+/).filter(Boolean).map(Number);if(m.length!==2||m.some(isNaN)||Math.abs(m[0])>90||Math.abs(m[1])>180)throw new Error('Ongeldige coördinaten: "'+s+'" (verwacht: lat, lon)');return m}
+function status(t,err){const e=$('status');e.textContent=t;e.className=err?'err':''}
+
+// Kortste afstand (km) van punt tot polyline + positie langs de route (km), lokale equirectangulaire projectie per punt
+function nearest(la,lo,c,cum,bb){
+  const k=Math.cos(la*RAD);let best=Infinity,along=0;
+  for(let i=1;i<c.length;i++){
+    // snelle uitsluiting per segment
+    if(bb&&(Math.min(c[i-1][1],c[i][1])-bb.dLa>la||Math.max(c[i-1][1],c[i][1])+bb.dLa<la||Math.min(c[i-1][0],c[i][0])-bb.dLo>lo||Math.max(c[i-1][0],c[i][0])+bb.dLo<lo))continue;
+    const ax=(c[i-1][0]-lo)*RAD*k*R,ay=(c[i-1][1]-la)*RAD*R,bx=(c[i][0]-lo)*RAD*k*R,by=(c[i][1]-la)*RAD*R;
+    const dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy;let t=L2?-(ax*dx+ay*dy)/L2:0;t=t<0?0:t>1?1:t;
+    const d=Math.hypot(ax+t*dx,ay+t*dy);
+    if(d<best){best=d;along=cum[i-1]+t*(cum[i]-cum[i-1])}
+  }
+  return [best,along];
+}
+
+async function load(){
+  const btn=$('go');btn.disabled=true;
+  try{
+    const a=parseLL($('from').value),b=parseLL($('to').value);
+    status('Route berekenen…');
+    const rr=await fetch(`${OSRM}${a[1]},${a[0]};${b[1]},${b[0]}?overview=full&geometries=geojson&steps=true`);
+    if(!rr.ok)throw new Error('Routeservice antwoordt met HTTP '+rr.status);
+    const rj=await rr.json();
+    if(rj.code!=='Ok'||!rj.routes?.length)throw new Error('Geen route gevonden ('+rj.code+')');
+    const r0=rj.routes[0],c=r0.geometry.coordinates;
+    const cum=[0];for(let i=1;i<c.length;i++){const k=Math.cos((c[i-1][1]+c[i][1])/2*RAD);cum.push(cum[i-1]+R*Math.hypot((c[i][0]-c[i-1][0])*RAD*k,(c[i][1]-c[i-1][1])*RAD))}
+    const roads=[...new Set(r0.legs[0].steps.filter(s=>s.distance>15000).map(s=>s.ref||s.name).filter(Boolean))];
+    let mnLa=90,mxLa=-90,mnLo=180,mxLo=-180;for(const[lo,la]of c){if(la<mnLa)mnLa=la;if(la>mxLa)mxLa=la;if(lo<mnLo)mnLo=lo;if(lo>mxLo)mxLo=lo}
+    route={c,cum,km:r0.distance/1000,min:r0.duration/60,roads};
+    if(routeLayer)map.removeLayer(routeLayer);
+    routeLayer=L.layerGroup([
+      L.polyline(c.map(p=>[p[1],p[0]]),{color:'#fff',weight:8,opacity:.9}),
+      L.polyline(c.map(p=>[p[1],p[0]]),{color:'#1240e0',weight:4.5}),
+      L.circleMarker([a[0],a[1]],{radius:7,color:'#fff',weight:2,fillColor:'#14171f',fillOpacity:1}).bindTooltip('Vertrek'),
+      L.circleMarker([b[0],b[1]],{radius:7,color:'#fff',weight:2,fillColor:'#14171f',fillOpacity:1}).bindTooltip('Bestemming')
+    ]).addTo(map);
+    map.fitBounds([[mnLa,mnLo],[mxLa,mxLo]],{padding:[20,20]});
+
+    status('Stations ophalen bij prix-carburants (officiële dataset)…');
+    const m=0.15; // ruime marge (~15 km), daarna exacte filtering
+    const where=`in_bbox(geom, ${(mnLa-m).toFixed(4)}, ${(mnLo-m).toFixed(4)}, ${(mxLa+m).toFixed(4)}, ${(mxLo+m).toFixed(4)})`;
+    const sr=await fetch(API+'?where='+encodeURIComponent(where));
+    if(!sr.ok)throw new Error('Prijsdataset antwoordt met HTTP '+sr.status);
+    const raw=await sr.json();
+    const bb={dLa:16/111,dLo:16/(111*Math.cos(46*RAD))};
+    stations=raw.map(s=>{
+      const la=s.geom?.lat??(+s.latitude/1e5),lo=s.geom?.lon??(+s.longitude/1e5);
+      if(!isFinite(la)||!isFinite(lo))return null;
+      const[d,along]=nearest(la,lo,c,cum,bb);
+      return{...s,la,lo,d,along};
+    }).filter(s=>s&&s.d<=15);
+    status(`Opgehaald ${new Date().toLocaleString('nl-BE')} · ${raw.length} stations in zoekgebied`);
+    render();
+  }catch(e){
+    console.error(e);
+    status('Fout: '+e.message+'. Controleer je internetverbinding of probeer later opnieuw.',true);
+  }finally{btn.disabled=false}
+}
+
+function color(t){ // 0 = goedkoop, 1 = duur
+  const st=[[26,150,65],[166,217,106],[253,174,97],[215,25,28]];
+  const x=Math.max(0,Math.min(1,t))*(st.length-1),i=Math.min(st.length-2,Math.floor(x)),f=x-i;
+  return 'rgb('+st[i].map((v,j)=>Math.round(v+(st[i+1][j]-v)*f)).join(',')+')';
+}
+const fmtDate=s=>s?new Date(s).toLocaleString('nl-BE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'–';
+const ageDays=s=>s?(Date.now()-new Date(s))/864e5:Infinity;
+
+function render(){
+  if(!stations||!route)return;
+  const fs=selFuels(),buf=+$('buf').value||4,only=$('onlySold').checked,noA=$('noAuto').checked;
+  // goedkoopste gekozen brandstof per station (bij gelijke prijs telt de volgorde E10, SP95, SP98, Diesel, E85, GPL)
+  const best=s=>{let b=null;for(const k of fs){const v=s[k+'_prix'];if(v!=null&&(b===null||v<b.p))b={f:k,p:v,m:s[k+'_maj']}}return b};
+  for(const s of stations)s._b=best(s);
+  const fname=fs.map(k=>FUELS[k]).join(' + ');
+  let sel=stations.filter(s=>s.d<=buf&&(!noA||s.pop!=='A'));
+  const total=sel.length;
+  if(only)sel=sel.filter(s=>s._b);
+  sel.sort((x,y)=>x.along-y.along);
+  const prices=sel.filter(s=>s._b).map(s=>s._b.p).sort((x,y)=>x-y);
+  const lo=prices[0],hi=prices[prices.length-1];
+  const med=prices.length?(prices.length%2?prices[(prices.length-1)/2]:(prices[prices.length/2-1]+prices[prices.length/2])/2):null;
+  const cheap=new Set(sel.filter(s=>s._b).sort((x,y)=>x._b.p-y._b.p).slice(0,3).map(s=>s.id));
+  const tnorm=v=>hi>lo?(v-lo)/(hi-lo):0;
+
+  // prijsfilter: schuif loopt van goedkoopste tot duurste prijs binnen de straal; kleurschaal blijft op alle prijzen gebaseerd
+  const sl=$('maxp');
+  if(prices.length){
+    sl.disabled=false;sl.min=lo.toFixed(3);sl.max=hi.toFixed(3);
+    if(maxPrice!=null&&maxPrice>=hi-1e-9)maxPrice=null;
+    if(maxPrice!=null&&maxPrice<lo)maxPrice=lo;
+    sl.value=(maxPrice??hi).toFixed(3);
+  }else{sl.disabled=true;maxPrice=null}
+  if(maxPrice!=null)sel=sel.filter(s=>s._b&&s._b.p<=maxPrice+1e-9);
+  const shown=sel.filter(s=>s._b).length;
+  $('maxv').textContent=maxPrice==null?'alle prijzen':`≤ € ${maxPrice.toFixed(3)} (${shown} van ${prices.length})`;
+
+  $('stats').innerHTML=`Route <b>${route.km.toFixed(1)} km</b>, ±${Math.floor(route.min/60)} u ${String(Math.round(route.min%60)).padStart(2,'0')} · ${esc(route.roads.join(' – '))}<br>`+
+    `<b>${prices.length}</b> stations met ${fname} binnen ${buf} km (van ${total} stations)`+
+    (prices.length?` · min <b>€ ${lo.toFixed(3)}</b> · mediaan <b>€ ${med.toFixed(3)}</b> · max <b>€ ${hi.toFixed(3)}</b>`:'')+
+    (maxPrice!=null?`<br>Filter actief: <b>${shown}</b> stations tot € ${maxPrice.toFixed(3)}`:'');
+
+  stationLayer.clearLayers();markers={};
+  for(const s of sel){
+    const b=s._b,p=b?b.p:null,has=p!=null,col=has?color(tnorm(p)):'#8a90a0';
+    const icon=L.divIcon({className:'pin'+(cheap.has(s.id)?' top':''),html:`<span style="background:${col}">${has?p.toFixed(3)+(fs.length>1?' '+FUELS[b.f]:''):'–'}</span>`,iconSize:[0,0]});
+    const rows=Object.keys(FUELS).filter(k=>s[k+'_prix']!=null).map(k=>`<tr><td>${FUELS[k]}</td><td><b>€ ${s[k+'_prix'].toFixed(3)}</b></td><td class="${ageDays(s[k+'_maj'])>3?'old':''}">${fmtDate(s[k+'_maj'])}</td></tr>`).join('');
+    const rupt=s.carburants_rupture_temporaire?`<div class="old">Tijdelijke rupture: ${esc(s.carburants_rupture_temporaire)}</div>`:'';
+    const html=`<b>${esc(s.adresse)}</b><br>${esc(s.cp)} ${esc(s.ville)}${s.pop==='A'?' <span class="tag a">A</span>':''}<br>
+      ${s.d.toFixed(1)} km van route · km ${s.along.toFixed(0)} van ${route.km.toFixed(0)}${s.horaires_automate_24_24==='Oui'?' · automaat 24/24':''}
+      <table>${rows||'<tr><td>Geen prijzen</td></tr>'}</table>${rupt}
+      <a href="https://maps.apple.com/?daddr=${s.la},${s.lo}&amp;dirflg=d" target="_blank" rel="noopener">Apple Maps</a> ·
+      <a href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.la},${s.lo}" target="_blank" rel="noopener">Google Maps</a> ·
+      <a href="https://www.prix-carburants.gouv.fr/" target="_blank" rel="noopener">prix-carburants.gouv.fr</a> (id ${esc(s.id)})`;
+    const mk=L.marker([s.la,s.lo],{icon,zIndexOffset:cheap.has(s.id)?1000:(has?Math.round(1000-tnorm(p)*900):0)}).bindPopup(html,{maxWidth:320}).addTo(stationLayer);
+    markers[s.id]=mk;
+  }
+
+  $('list').innerHTML=sel.length?sel.map(s=>{
+    const b=s._b,p=b?b.p:null,has=p!=null,old=has&&ageDays(b.m)>3;
+    return `<div class="st" data-id="${esc(s.id)}">
+      <div class="km">km ${s.along.toFixed(0)}</div>
+      <div class="nm">${esc(s.ville)}${s.pop==='A'?'<span class="tag a">A</span>':''}${cheap.has(s.id)?'<span class="tag">top 3</span>':''}</div>
+      <div><span class="pr" style="background:${has?color(tnorm(p)):'#8a90a0'}">${has?FUELS[b.f]+' € '+p.toFixed(3):'n.v.t.'}</span></div>
+      <div class="ad">${esc(s.adresse)} · ${s.d.toFixed(1)} km van route · <span class="${old?'old':''}">${has?FUELS[b.f]+'-prijs '+fmtDate(b.m):''}</span><br><a href="https://maps.apple.com/?daddr=${s.la},${s.lo}&amp;dirflg=d" target="_blank" rel="noopener">Apple Maps</a><a href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.la},${s.lo}" target="_blank" rel="noopener">Google Maps</a></div>
+    </div>`}).join(''):'<div style="padding:16px">Geen stations gevonden met deze filters.</div>';
+}
+
+$('list').addEventListener('click',e=>{
+  if(e.target.closest('a'))return;
+  const el=e.target.closest('.st');if(!el)return;
+  document.querySelectorAll('.st.sel').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');
+  const mk=markers[el.dataset.id];if(mk){map.setView(mk.getLatLng(),Math.max(map.getZoom(),13));mk.openPopup();if(innerWidth<=760)scrollTo({top:0,behavior:'smooth'})}
+});
+$('go').addEventListener('click',load);
+function selFuels(){const c=[...document.querySelectorAll('#fuels input')];let v=c.filter(x=>x.checked).map(x=>x.value);if(!v.length){c[0].checked=true;v=[c[0].value]}return v}
+$('fuels').addEventListener('change',e=>{const c=[...document.querySelectorAll('#fuels input')];if(!c.some(x=>x.checked))e.target.checked=true;maxPrice=null;render()});
+['buf','onlySold','noAuto'].forEach(id=>$(id).addEventListener('change',render));
+$('maxp').addEventListener('input',e=>{maxPrice=+e.target.value;render()});
+load();
+}
+</script>
+</body>
+</html>
