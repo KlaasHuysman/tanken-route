@@ -86,6 +86,7 @@ foot{display:block;padding:8px 16px;font-size:11px;color:#4a5060;border-top:1px 
       <div class="full"><button type="button" class="sec trk" id="track" aria-pressed="false" data-i="track" style="width:100%">Toon mijn positie</button></div>
       <div class="full" id="posinfo"></div>
       <label class="row full"><input type="checkbox" id="onlySold" checked> <span data-i="onlySold">Alleen stations die een gekozen brandstof verkopen</span></label>
+      <label class="row full"><input type="checkbox" id="onlyAuto"> <span data-i="onlyAuto">Alleen tanken op de autosnelweg (aires)</span></label>
       <label class="row full"><input type="checkbox" id="noAuto"> <span data-i="noAuto">Autosnelwegstations (aires) verbergen</span></label>
       <div class="full"><button id="go" data-i="go">Route en prijzen ophalen</button></div>
     </div>
@@ -107,7 +108,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 
 // ---------- vertalingen ----------
 const T={
-nl:{circleNote:' Cirkel = actieradius in vogelvlucht; over de weg kom je minder ver, de groene route is de echte maat.',reachOk:'bereikbaar',reachNo:'buiten bereik',range:'Ik kan nog rijden (km)',track:'Toon mijn positie',trackOff:'Positie verbergen',youAt:'Je positie: km {a} van de route ({d} km ervan).',offRoute:'Je bent {d} km van de route; afstanden worden gerekend vanaf het vertrek.',reachTo:' Bereik tot km {e} van {t}.',inRange:'{n} stations binnen bereik',noneInRange:'Geen tankstation binnen je actieradius met deze filters!',ahead:'over {x} km',rangeEnd:'Einde actieradius',me:'Mijn positie',passed:' Stations die je al voorbij bent, zijn verborgen.',title:'Tanken langs je route',h1:'Brandstof langs je route',sub:'Live data van prix-carburants.gouv.fr · route via OSRM',
+nl:{onlyAuto:'Alleen tanken op de autosnelweg (aires)',circleNote:' Cirkel = actieradius in vogelvlucht; over de weg kom je minder ver, de groene route is de echte maat.',reachOk:'bereikbaar',reachNo:'buiten bereik',range:'Ik kan nog rijden (km)',track:'Toon mijn positie',trackOff:'Positie verbergen',youAt:'Je positie: km {a} van de route ({d} km ervan).',offRoute:'Je bent {d} km van de route; afstanden worden gerekend vanaf het vertrek.',reachTo:' Bereik tot km {e} van {t}.',inRange:'{n} stations binnen bereik',noneInRange:'Geen tankstation binnen je actieradius met deze filters!',ahead:'over {x} km',rangeEnd:'Einde actieradius',me:'Mijn positie',passed:' Stations die je al voorbij bent, zijn verborgen.',title:'Tanken langs je route',h1:'Brandstof langs je route',sub:'Live data van prix-carburants.gouv.fr · route via OSRM',
  from:'Van (plaats, adres of lat, lon)',to:'Naar',fromS:'Van',toS:'Naar',myloc:'Mijn locatie als vertrek',swap:'Van ⇄ Naar',
  fuel:'Brandstof (meerdere mogelijk – per station telt de goedkoopste)',diesel:'Diesel',buf:'Straal rond route (km)',maxAge:'Prijs maximaal … oud',
  d1:'1 dag',d2:'2 dagen',d3:'3 dagen',d7:'7 dagen',d0:'geen limiet',maxp:'Maximale prijs:',all:'alle prijzen',of:'van',
@@ -122,7 +123,7 @@ nl:{circleNote:' Cirkel = actieradius in vogelvlucht; over de weg kom je minder 
  filt:'Filter actief: {n} stations tot € {p}',fromRoute:'{d} km van route',along:'km {a} van {t}',auto24:'automaat 24/24',noPrices:'Geen prijzen',rupt:'Tijdelijk niet leverbaar',
  priceOf:'{f}-prijs {d}',na:'n.v.t.',none:'Geen stations gevonden met deze filters.',noGeo:'Je browser geeft geen locatie door.',locating:'Locatie bepalen…',
  locFail:'Locatie niet beschikbaar ({m}). Geef toestemming voor locatie of typ een plaats.'},
-fr:{circleNote:' Cercle = autonomie à vol d’oiseau ; par la route vous irez moins loin, le trajet vert est la vraie mesure.',reachOk:'atteignable',reachNo:'hors de portée',range:'Autonomie restante (km)',track:'Afficher ma position',trackOff:'Masquer ma position',youAt:'Votre position : km {a} du trajet (à {d} km).',offRoute:'Vous êtes à {d} km du trajet ; les distances sont comptées depuis le départ.',reachTo:' Autonomie jusqu’au km {e} sur {t}.',inRange:'{n} stations à portée',noneInRange:'Aucune station à portée avec ces filtres !',ahead:'dans {x} km',rangeEnd:'Limite d’autonomie',me:'Ma position',passed:' Les stations déjà dépassées sont masquées.',title:'Faire le plein sur votre trajet',h1:'Carburant le long de votre trajet',sub:'Données en direct de prix-carburants.gouv.fr · itinéraire via OSRM',
+fr:{onlyAuto:'Seulement les stations d’autoroute (aires)',circleNote:' Cercle = autonomie à vol d’oiseau ; par la route vous irez moins loin, le trajet vert est la vraie mesure.',reachOk:'atteignable',reachNo:'hors de portée',range:'Autonomie restante (km)',track:'Afficher ma position',trackOff:'Masquer ma position',youAt:'Votre position : km {a} du trajet (à {d} km).',offRoute:'Vous êtes à {d} km du trajet ; les distances sont comptées depuis le départ.',reachTo:' Autonomie jusqu’au km {e} sur {t}.',inRange:'{n} stations à portée',noneInRange:'Aucune station à portée avec ces filtres !',ahead:'dans {x} km',rangeEnd:'Limite d’autonomie',me:'Ma position',passed:' Les stations déjà dépassées sont masquées.',title:'Faire le plein sur votre trajet',h1:'Carburant le long de votre trajet',sub:'Données en direct de prix-carburants.gouv.fr · itinéraire via OSRM',
  from:'Départ (ville, adresse ou lat, lon)',to:'Arrivée',fromS:'Départ',toS:'Arrivée',myloc:'Ma position comme départ',swap:'Départ ⇄ Arrivée',
  fuel:'Carburant (plusieurs choix possibles – le moins cher par station compte)',diesel:'Gazole',buf:'Rayon autour du trajet (km)',maxAge:'Âge maximal du prix',
  d1:'1 jour',d2:'2 jours',d3:'3 jours',d7:'7 jours',d0:'sans limite',maxp:'Prix maximal :',all:'tous les prix',of:'sur',
@@ -137,7 +138,7 @@ fr:{circleNote:' Cercle = autonomie à vol d’oiseau ; par la route vous irez m
  filt:'Filtre actif : {n} stations jusqu’à € {p}',fromRoute:'{d} km du trajet',along:'km {a} sur {t}',auto24:'automate 24/24',noPrices:'Aucun prix',rupt:'Rupture temporaire',
  priceOf:'prix {f} du {d}',na:'n.d.',none:'Aucune station trouvée avec ces filtres.',noGeo:'Votre navigateur ne fournit pas de position.',locating:'Localisation…',
  locFail:'Position indisponible ({m}). Autorisez la localisation ou saisissez un lieu.'},
-en:{circleNote:' Circle = range as the crow flies; by road you get less far, the green route is the real measure.',reachOk:'reachable',reachNo:'out of range',range:'Remaining range (km)',track:'Show my position',trackOff:'Hide my position',youAt:'Your position: km {a} of the route ({d} km off it).',offRoute:'You are {d} km from the route; distances are counted from the start.',reachTo:' Range up to km {e} of {t}.',inRange:'{n} stations within range',noneInRange:'No station within your range with these filters!',ahead:'in {x} km',rangeEnd:'End of range',me:'My position',passed:' Stations you have already passed are hidden.',title:'Fuel along your route',h1:'Fuel along your route',sub:'Live data from prix-carburants.gouv.fr · route via OSRM',
+en:{onlyAuto:'Motorway stations only (aires)',circleNote:' Circle = range as the crow flies; by road you get less far, the green route is the real measure.',reachOk:'reachable',reachNo:'out of range',range:'Remaining range (km)',track:'Show my position',trackOff:'Hide my position',youAt:'Your position: km {a} of the route ({d} km off it).',offRoute:'You are {d} km from the route; distances are counted from the start.',reachTo:' Range up to km {e} of {t}.',inRange:'{n} stations within range',noneInRange:'No station within your range with these filters!',ahead:'in {x} km',rangeEnd:'End of range',me:'My position',passed:' Stations you have already passed are hidden.',title:'Fuel along your route',h1:'Fuel along your route',sub:'Live data from prix-carburants.gouv.fr · route via OSRM',
  from:'From (place, address or lat, lon)',to:'To',fromS:'From',toS:'To',myloc:'Use my location as start',swap:'From ⇄ To',
  fuel:'Fuel (several allowed – the cheapest per station counts)',diesel:'Diesel',buf:'Distance from route (km)',maxAge:'Maximum price age',
  d1:'1 day',d2:'2 days',d3:'3 days',d7:'7 days',d0:'no limit',maxp:'Maximum price:',all:'all prices',of:'of',
@@ -287,7 +288,7 @@ const ageDays=s=>s?(Date.now()-new Date(s))/864e5:Infinity;
 function render(){
   renderStatus();
   if(!stations||!route){$('maxv').textContent=t('all');return}
-  const fs=selFuels(),buf=+$('buf').value||4,only=$('onlySold').checked,noA=$('noAuto').checked;
+  const fs=selFuels(),buf=+$('buf').value||4,only=$('onlySold').checked,noA=$('noAuto').checked,onlyA=$('onlyAuto').checked;
   // goedkoopste gekozen brandstof per station (bij gelijke prijs telt de volgorde E10, SP95, SP98, Diesel, E85, GPL)
   // prijzen ouder dan de gekozen limiet tellen niet mee (een station met verse SP95 maar oude E10 blijft zo zichtbaar met SP95)
   const maxAge=+$('maxAge').value;
@@ -298,7 +299,7 @@ function render(){
   let posAlong=null,posOff=null;
   if(pos){const[d,a]=nearest(pos.la,pos.lo,route.c,route.cum,null);posOff=d;if(d<=20)posAlong=a}
   const rng=parseFloat($('range').value),hasR=isFinite(rng)&&rng>0,ref=posAlong??0,endKm=ref+(hasR?rng:0);
-  let sel=stations.filter(s=>s.d<=buf&&(!noA||s.pop!=='A')&&(posAlong==null||s.along>=posAlong-0.5)&&(!hasR||(s.along-ref)+s.d<=rng));
+  let sel=stations.filter(s=>s.d<=buf&&(!noA||s.pop!=='A')&&(!onlyA||s.pop==='A')&&(posAlong==null||s.along>=posAlong-0.5)&&(!hasR||(s.along-ref)+s.d<=rng));
   const total=sel.length;
   if(only)sel=sel.filter(s=>s._b);
   sel.sort((x,y)=>x.along-y.along);
@@ -395,7 +396,10 @@ $('lang').addEventListener('click',e=>{const b=e.target.closest('button[data-l]'
 try{const s=JSON.parse(localStorage.getItem('tanken-route')||'null');if(s&&s.from&&s.to){$('from').value=s.from;$('to').value=s.to}}catch(e){}
 function selFuels(){const c=[...document.querySelectorAll('#fuels input')];let v=c.filter(x=>x.checked).map(x=>x.value);if(!v.length){c[0].checked=true;v=[c[0].value]}return v}
 $('fuels').addEventListener('change',e=>{const c=[...document.querySelectorAll('#fuels input')];if(!c.some(x=>x.checked))e.target.checked=true;maxPrice=null;render()});
-['buf','onlySold','noAuto','maxAge'].forEach(id=>$(id).addEventListener('change',render));
+['buf','onlySold','maxAge'].forEach(id=>$(id).addEventListener('change',render));
+// 'alleen autosnelweg' en 'autosnelweg verbergen' sluiten elkaar uit
+$('onlyAuto').addEventListener('change',()=>{if($('onlyAuto').checked)$('noAuto').checked=false;maxPrice=null;render()});
+$('noAuto').addEventListener('change',()=>{if($('noAuto').checked)$('onlyAuto').checked=false;maxPrice=null;render()});
 $('maxp').addEventListener('input',e=>{maxPrice=+e.target.value;render()});
 $('range').addEventListener('input',()=>{const v=parseFloat($('range').value);$('rangeS').value=isFinite(v)&&v>0?Math.min(v,1000):0;maxPrice=null;saveRange();render()});
 $('rangeS').addEventListener('input',()=>{const v=+$('rangeS').value;$('range').value=v>0?v:'';maxPrice=null;saveRange();render()});
