@@ -47,7 +47,7 @@ button:disabled{opacity:.5;cursor:wait}
 .leaflet-popup-content table{border-collapse:collapse;margin-top:4px}
 .leaflet-popup-content td{padding:1px 8px 1px 0;font-variant-numeric:tabular-nums}
 .legend{background:#fff;padding:6px 8px;border-radius:4px;font-size:12px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-.legend i{display:inline-block;width:120px;height:8px;background:linear-gradient(90deg,#1a9641,#a6d96a,#fdae61,#d7191c);vertical-align:middle;margin:0 4px}
+.legend .ln{display:inline-block;width:22px;height:5px;border-radius:3px;vertical-align:middle;margin:0 4px 0 8px}.legend i{display:inline-block;width:120px;height:8px;background:linear-gradient(90deg,#1a9641,#a6d96a,#fdae61,#d7191c);vertical-align:middle;margin:0 4px}
 .fuels{display:flex;flex-wrap:wrap;gap:6px}.fuels label{flex-direction:row!important;align-items:center;gap:6px!important;border:1px solid #c4c9d4;border-radius:6px;padding:0 10px;min-height:40px;color:#14171f!important;font-size:14px!important;cursor:pointer}.fuels label:has(input:checked){background:#1240e0;border-color:#1240e0;color:#fff!important}.fuels input{accent-color:#fff}
 .btns{display:flex;gap:8px;flex-wrap:wrap}.sec{background:#fff;color:#1240e0;border:1px solid #1240e0;font-size:14px}#where{font-size:12px;color:#4a5060}#where b{color:#14171f}
 .ad a{color:#1240e0;font-weight:600;margin-right:10px;display:inline-block;padding:4px 0}
@@ -106,7 +106,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 
 // ---------- vertalingen ----------
 const T={
-nl:{range:'Ik kan nog rijden (km)',track:'Toon mijn positie',trackOff:'Positie verbergen',youAt:'Je positie: km {a} van de route ({d} km ervan).',offRoute:'Je bent {d} km van de route; afstanden worden gerekend vanaf het vertrek.',reachTo:' Bereik tot km {e} van {t}.',inRange:'{n} stations binnen bereik',noneInRange:'Geen tankstation binnen je actieradius met deze filters!',ahead:'over {x} km',rangeEnd:'Einde actieradius',me:'Mijn positie',passed:' Stations die je al voorbij bent, zijn verborgen.',title:'Tanken langs je route',h1:'Brandstof langs je route',sub:'Live data van prix-carburants.gouv.fr · route via OSRM',
+nl:{reachOk:'bereikbaar',reachNo:'buiten bereik',range:'Ik kan nog rijden (km)',track:'Toon mijn positie',trackOff:'Positie verbergen',youAt:'Je positie: km {a} van de route ({d} km ervan).',offRoute:'Je bent {d} km van de route; afstanden worden gerekend vanaf het vertrek.',reachTo:' Bereik tot km {e} van {t}.',inRange:'{n} stations binnen bereik',noneInRange:'Geen tankstation binnen je actieradius met deze filters!',ahead:'over {x} km',rangeEnd:'Einde actieradius',me:'Mijn positie',passed:' Stations die je al voorbij bent, zijn verborgen.',title:'Tanken langs je route',h1:'Brandstof langs je route',sub:'Live data van prix-carburants.gouv.fr · route via OSRM',
  from:'Van (plaats, adres of lat, lon)',to:'Naar',fromS:'Van',toS:'Naar',myloc:'Mijn locatie als vertrek',swap:'Van ⇄ Naar',
  fuel:'Brandstof (meerdere mogelijk – per station telt de goedkoopste)',diesel:'Diesel',buf:'Straal rond route (km)',maxAge:'Prijs maximaal … oud',
  d1:'1 dag',d2:'2 dagen',d3:'3 dagen',d7:'7 dagen',d0:'geen limiet',maxp:'Maximale prijs:',all:'alle prijzen',of:'van',
@@ -121,7 +121,7 @@ nl:{range:'Ik kan nog rijden (km)',track:'Toon mijn positie',trackOff:'Positie v
  filt:'Filter actief: {n} stations tot € {p}',fromRoute:'{d} km van route',along:'km {a} van {t}',auto24:'automaat 24/24',noPrices:'Geen prijzen',rupt:'Tijdelijk niet leverbaar',
  priceOf:'{f}-prijs {d}',na:'n.v.t.',none:'Geen stations gevonden met deze filters.',noGeo:'Je browser geeft geen locatie door.',locating:'Locatie bepalen…',
  locFail:'Locatie niet beschikbaar ({m}). Geef toestemming voor locatie of typ een plaats.'},
-fr:{range:'Autonomie restante (km)',track:'Afficher ma position',trackOff:'Masquer ma position',youAt:'Votre position : km {a} du trajet (à {d} km).',offRoute:'Vous êtes à {d} km du trajet ; les distances sont comptées depuis le départ.',reachTo:' Autonomie jusqu’au km {e} sur {t}.',inRange:'{n} stations à portée',noneInRange:'Aucune station à portée avec ces filtres !',ahead:'dans {x} km',rangeEnd:'Limite d’autonomie',me:'Ma position',passed:' Les stations déjà dépassées sont masquées.',title:'Faire le plein sur votre trajet',h1:'Carburant le long de votre trajet',sub:'Données en direct de prix-carburants.gouv.fr · itinéraire via OSRM',
+fr:{reachOk:'atteignable',reachNo:'hors de portée',range:'Autonomie restante (km)',track:'Afficher ma position',trackOff:'Masquer ma position',youAt:'Votre position : km {a} du trajet (à {d} km).',offRoute:'Vous êtes à {d} km du trajet ; les distances sont comptées depuis le départ.',reachTo:' Autonomie jusqu’au km {e} sur {t}.',inRange:'{n} stations à portée',noneInRange:'Aucune station à portée avec ces filtres !',ahead:'dans {x} km',rangeEnd:'Limite d’autonomie',me:'Ma position',passed:' Les stations déjà dépassées sont masquées.',title:'Faire le plein sur votre trajet',h1:'Carburant le long de votre trajet',sub:'Données en direct de prix-carburants.gouv.fr · itinéraire via OSRM',
  from:'Départ (ville, adresse ou lat, lon)',to:'Arrivée',fromS:'Départ',toS:'Arrivée',myloc:'Ma position comme départ',swap:'Départ ⇄ Arrivée',
  fuel:'Carburant (plusieurs choix possibles – le moins cher par station compte)',diesel:'Gazole',buf:'Rayon autour du trajet (km)',maxAge:'Âge maximal du prix',
  d1:'1 jour',d2:'2 jours',d3:'3 jours',d7:'7 jours',d0:'sans limite',maxp:'Prix maximal :',all:'tous les prix',of:'sur',
@@ -136,7 +136,7 @@ fr:{range:'Autonomie restante (km)',track:'Afficher ma position',trackOff:'Masqu
  filt:'Filtre actif : {n} stations jusqu’à € {p}',fromRoute:'{d} km du trajet',along:'km {a} sur {t}',auto24:'automate 24/24',noPrices:'Aucun prix',rupt:'Rupture temporaire',
  priceOf:'prix {f} du {d}',na:'n.d.',none:'Aucune station trouvée avec ces filtres.',noGeo:'Votre navigateur ne fournit pas de position.',locating:'Localisation…',
  locFail:'Position indisponible ({m}). Autorisez la localisation ou saisissez un lieu.'},
-en:{range:'Remaining range (km)',track:'Show my position',trackOff:'Hide my position',youAt:'Your position: km {a} of the route ({d} km off it).',offRoute:'You are {d} km from the route; distances are counted from the start.',reachTo:' Range up to km {e} of {t}.',inRange:'{n} stations within range',noneInRange:'No station within your range with these filters!',ahead:'in {x} km',rangeEnd:'End of range',me:'My position',passed:' Stations you have already passed are hidden.',title:'Fuel along your route',h1:'Fuel along your route',sub:'Live data from prix-carburants.gouv.fr · route via OSRM',
+en:{reachOk:'reachable',reachNo:'out of range',range:'Remaining range (km)',track:'Show my position',trackOff:'Hide my position',youAt:'Your position: km {a} of the route ({d} km off it).',offRoute:'You are {d} km from the route; distances are counted from the start.',reachTo:' Range up to km {e} of {t}.',inRange:'{n} stations within range',noneInRange:'No station within your range with these filters!',ahead:'in {x} km',rangeEnd:'End of range',me:'My position',passed:' Stations you have already passed are hidden.',title:'Fuel along your route',h1:'Fuel along your route',sub:'Live data from prix-carburants.gouv.fr · route via OSRM',
  from:'From (place, address or lat, lon)',to:'To',fromS:'From',toS:'To',myloc:'Use my location as start',swap:'From ⇄ To',
  fuel:'Fuel (several allowed – the cheapest per station counts)',diesel:'Diesel',buf:'Distance from route (km)',maxAge:'Maximum price age',
  d1:'1 day',d2:'2 days',d3:'3 days',d7:'7 days',d0:'no limit',maxp:'Maximum price:',all:'all prices',of:'of',
@@ -169,6 +169,11 @@ const legend=L.control({position:'bottomright'});
 legend.onAdd=()=>{const d=L.DomUtil.create('div','legend');d.id='legend';return d};
 legend.addTo(map);
 
+let rangeLayer=null;
+function setLegend(r){$('legend').innerHTML=esc(t('cheap'))+'<i></i>'+esc(t('dear'))+(r?'<br><span class="ln" style="background:#1a9641"></span>'+esc(t('reachOk'))+'<span class="ln" style="background:#d7191c"></span>'+esc(t('reachNo')):'')}
+// punt op de route op afstand k (km langs de route), en het routedeel tussen a en b km
+function ptAt(k){const c=route.c,cu=route.cum;let i=1;while(i<cu.length-1&&cu[i]<k)i++;const f=Math.max(0,Math.min(1,(k-cu[i-1])/((cu[i]-cu[i-1])||1)));return[c[i-1][1]+f*(c[i][1]-c[i-1][1]),c[i-1][0]+f*(c[i][0]-c[i-1][0])]}
+function cut(a,b){const c=route.c,cu=route.cum,o=[];if(b<=a)return o;o.push(ptAt(a));for(let i=0;i<cu.length;i++)if(cu[i]>a&&cu[i]<b)o.push([c[i][1],c[i][0]]);o.push(ptAt(b));return o}
 let pos=null, watchId=null, posLayer=null, rangeMk=null, lastPosRender=null, centred=false;
 let routeLayer=null, stationLayer=L.layerGroup().addTo(map), route=null, stations=null, markers={}, maxPrice=null, ends=null, stat=null;
 
@@ -181,11 +186,10 @@ function applyLang(){
   if(watchId!=null)$('track').textContent=t('trackOff');
   if(posLayer)posLayer.getLayers()[1].setTooltipContent(t('me'));
   for(const b of $('lang').children)b.setAttribute('aria-pressed',b.dataset.l===lang);
-  $('legend').innerHTML=esc(t('cheap'))+'<i></i>'+esc(t('dear'));
   if(layerCtl)map.removeControl(layerCtl);
   layerCtl=L.control.layers({'OpenStreetMap':osm,[t('esri')]:esri}).addTo(map);
   if(routeLayer){try{routeLayer.getLayers()[2].setTooltipContent(t('start'));routeLayer.getLayers()[3].setTooltipContent(t('dest'))}catch(e){}}
-  showWhere();render();
+  setLegend(false);showWhere();render();
 }
 
 // plaats → coördinaten: "lat, lon" rechtstreeks, anders opzoeken via OpenStreetMap Nominatim
@@ -326,10 +330,18 @@ function render(){
   if(hasR)ptxt+=(ptxt?' ':'')+t('reachTo',{e:Math.min(endKm,route.km).toFixed(0),t:route.km.toFixed(0)}).trim()+' '+t('inRange',{n:shown})+'.';
   pi.textContent=ptxt;pi.className=hasR&&!shown?'warn':'';
   if(hasR&&!shown)pi.textContent+=' '+t('noneInRange');
+  // route inkleuren: grijs = al gereden, groen = binnen actieradius, rood = daarbuiten
+  if(rangeLayer){map.removeLayer(rangeLayer);rangeLayer=null}
   if(rangeMk){map.removeLayer(rangeMk);rangeMk=null}
-  if(hasR&&endKm<route.km){const cu=route.cum,cc=route.c;let i=1;while(i<cu.length-1&&cu[i]<endKm)i++;const f=(endKm-cu[i-1])/((cu[i]-cu[i-1])||1);
-    const ll=[cc[i-1][1]+f*(cc[i][1]-cc[i-1][1]),cc[i-1][0]+f*(cc[i][0]-cc[i-1][0])];
-    rangeMk=L.circleMarker(ll,{radius:9,color:'#fff',weight:3,fillColor:'#d7191c',fillOpacity:1}).bindTooltip(t('rangeEnd')+' (km '+endKm.toFixed(0)+')',{permanent:true,direction:'right'}).addTo(map)}
+  setLegend(hasR);
+  {const segs=[];
+   if(posAlong!=null&&posAlong>0)segs.push(L.polyline(cut(0,posAlong),{color:'#8a90a0',weight:5,opacity:.95,interactive:false}));
+   if(hasR){const e=Math.min(endKm,route.km);
+     segs.push(L.polyline(cut(ref,e),{color:'#1a9641',weight:5,opacity:.95,interactive:false}));
+     if(endKm<route.km){segs.push(L.polyline(cut(endKm,route.km),{color:'#d7191c',weight:5,opacity:.95,interactive:false}));
+       rangeMk=L.circleMarker(ptAt(endKm),{radius:9,color:'#fff',weight:3,fillColor:'#d7191c',fillOpacity:1}).bindTooltip(t('rangeEnd')+' (km '+endKm.toFixed(0)+')',{permanent:true,direction:'right'}).addTo(map)}}
+   if(segs.length)rangeLayer=L.layerGroup(segs).addTo(map);
+   if(rangeMk)rangeMk.bringToFront();}
 
   stationLayer.clearLayers();markers={};
   for(const s of sel){
