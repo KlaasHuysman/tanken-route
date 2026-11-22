@@ -51,6 +51,8 @@ button:disabled{opacity:.5;cursor:wait}
 .fuels{display:flex;flex-wrap:wrap;gap:6px}.fuels label{flex-direction:row!important;align-items:center;gap:6px!important;border:1px solid #c4c9d4;border-radius:6px;padding:0 10px;min-height:40px;color:#14171f!important;font-size:14px!important;cursor:pointer}.fuels label:has(input:checked){background:#1240e0;border-color:#1240e0;color:#fff!important}.fuels input{accent-color:#fff}
 .btns{display:flex;gap:8px;flex-wrap:wrap}.sec{background:#fff;color:#1240e0;border:1px solid #1240e0;font-size:14px}#where{font-size:12px;color:#4a5060}#where b{color:#14171f}
 .ad a{color:#1240e0;font-weight:600;margin-right:10px;display:inline-block;padding:4px 0}
+#posinfo{font-size:12px;color:#14171f;background:#fff7e0;border-radius:4px;padding:4px 8px}#posinfo:empty{display:none}#posinfo.warn{background:#fde2e2;color:#b00020;font-weight:600}.trk[aria-pressed=true]{background:#1240e0;color:#fff}
+.me{width:16px;height:16px;border-radius:50%;background:#1a73e8;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.3),0 1px 4px rgba(0,0,0,.4)}
 foot{display:block;padding:8px 16px;font-size:11px;color:#4a5060;border-top:1px solid #e3e6ec}
 @media(max-width:760px){html,body{height:auto}#app{display:block;height:auto}#map{height:55vh;height:55dvh;position:sticky;top:0;z-index:1}#side{border-right:0;overflow:visible;position:relative;z-index:2;background:#fff}#list{overflow:visible}.st{padding:10px 16px}}
 </style>
@@ -79,6 +81,9 @@ foot{display:block;padding:8px 16px;font-size:11px;color:#4a5060;border-top:1px 
       <label><span data-i="buf">Straal rond route (km)</span><input type="number" id="buf" value="4" min="0.5" max="15" step="0.5"></label>
       <label><span data-i="maxAge">Prijs maximaal … oud</span><select id="maxAge"><option value="1" data-i="d1">1 dag</option><option value="2" data-i="d2" selected>2 dagen</option><option value="3" data-i="d3">3 dagen</option><option value="7" data-i="d7">7 dagen</option><option value="0" data-i="d0">geen limiet</option></select></label>
       <label class="full"><span><span data-i="maxp">Maximale prijs:</span> <b id="maxv"></b></span><input type="range" id="maxp" min="0" max="1" step="0.001" value="1" disabled></label>
+      <label><span data-i="range">Ik kan nog rijden (km)</span><input type="number" id="range" min="0" step="10" inputmode="numeric" placeholder="∞"></label>
+      <div style="display:flex;align-items:flex-end"><button type="button" class="sec trk" id="track" aria-pressed="false" data-i="track" style="width:100%">Toon mijn positie</button></div>
+      <div class="full" id="posinfo"></div>
       <label class="row full"><input type="checkbox" id="onlySold" checked> <span data-i="onlySold">Alleen stations die een gekozen brandstof verkopen</span></label>
       <label class="row full"><input type="checkbox" id="noAuto"> <span data-i="noAuto">Autosnelwegstations (aires) verbergen</span></label>
       <div class="full"><button id="go" data-i="go">Route en prijzen ophalen</button></div>
@@ -101,12 +106,12 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 
 // ---------- vertalingen ----------
 const T={
-nl:{title:'Tanken langs je route',h1:'Brandstof langs je route',sub:'Live data van prix-carburants.gouv.fr · route via OSRM',
+nl:{range:'Ik kan nog rijden (km)',track:'Toon mijn positie',trackOff:'Positie verbergen',youAt:'Je positie: km {a} van de route ({d} km ervan).',offRoute:'Je bent {d} km van de route; afstanden worden gerekend vanaf het vertrek.',reachTo:' Bereik tot km {e} van {t}.',inRange:'{n} stations binnen bereik',noneInRange:'Geen tankstation binnen je actieradius met deze filters!',ahead:'over {x} km',rangeEnd:'Einde actieradius',me:'Mijn positie',passed:' Stations die je al voorbij bent, zijn verborgen.',title:'Tanken langs je route',h1:'Brandstof langs je route',sub:'Live data van prix-carburants.gouv.fr · route via OSRM',
  from:'Van (plaats, adres of lat, lon)',to:'Naar',fromS:'Van',toS:'Naar',myloc:'Mijn locatie als vertrek',swap:'Van ⇄ Naar',
  fuel:'Brandstof (meerdere mogelijk – per station telt de goedkoopste)',diesel:'Diesel',buf:'Straal rond route (km)',maxAge:'Prijs maximaal … oud',
  d1:'1 dag',d2:'2 dagen',d3:'3 dagen',d7:'7 dagen',d0:'geen limiet',maxp:'Maximale prijs:',all:'alle prijzen',of:'van',
  onlySold:'Alleen stations die een gekozen brandstof verkopen',noAuto:'Autosnelwegstations (aires) verbergen',go:'Route en prijzen ophalen',
- foot:'Afstand = kortste afstand in vogelvlucht tot de route, niet de omrijafstand. "A" = station aan autosnelweg. Prijzen ouder dan 3 dagen staan in het rood. Controleer altijd de prijs aan de pomp.',
+ foot:'Afstand = kortste afstand in vogelvlucht tot de route, niet de omrijafstand. "A" = station aan autosnelweg. Prijzen ouder dan 3 dagen staan in het rood. Controleer altijd de prijs aan de pomp. Bereik = km langs de route tot het station + de afstand van de route tot het station; houd zelf een veiligheidsmarge.',
  cheap:'Goedkoop',dear:'Duur',esri:'Esri stratenkaart',start:'Vertrek',dest:'Bestemming',
  empty:'{l} is leeg',badCoord:'Ongeldige coördinaten bij {l}',geoFail:'Plaatsnaam opzoeken mislukt (HTTP {s})',notFound:'{l} "{q}" niet gevonden; probeer een preciezere naam of een adres',
  sPlaces:'Plaatsen opzoeken…',sRoute:'Route berekenen…',routeHttp:'Routeservice antwoordt met HTTP {s}',noRoute:'Geen route gevonden ({c})',
@@ -116,12 +121,12 @@ nl:{title:'Tanken langs je route',h1:'Brandstof langs je route',sub:'Live data v
  filt:'Filter actief: {n} stations tot € {p}',fromRoute:'{d} km van route',along:'km {a} van {t}',auto24:'automaat 24/24',noPrices:'Geen prijzen',rupt:'Tijdelijk niet leverbaar',
  priceOf:'{f}-prijs {d}',na:'n.v.t.',none:'Geen stations gevonden met deze filters.',noGeo:'Je browser geeft geen locatie door.',locating:'Locatie bepalen…',
  locFail:'Locatie niet beschikbaar ({m}). Geef toestemming voor locatie of typ een plaats.'},
-fr:{title:'Faire le plein sur votre trajet',h1:'Carburant le long de votre trajet',sub:'Données en direct de prix-carburants.gouv.fr · itinéraire via OSRM',
+fr:{range:'Autonomie restante (km)',track:'Afficher ma position',trackOff:'Masquer ma position',youAt:'Votre position : km {a} du trajet (à {d} km).',offRoute:'Vous êtes à {d} km du trajet ; les distances sont comptées depuis le départ.',reachTo:' Autonomie jusqu’au km {e} sur {t}.',inRange:'{n} stations à portée',noneInRange:'Aucune station à portée avec ces filtres !',ahead:'dans {x} km',rangeEnd:'Limite d’autonomie',me:'Ma position',passed:' Les stations déjà dépassées sont masquées.',title:'Faire le plein sur votre trajet',h1:'Carburant le long de votre trajet',sub:'Données en direct de prix-carburants.gouv.fr · itinéraire via OSRM',
  from:'Départ (ville, adresse ou lat, lon)',to:'Arrivée',fromS:'Départ',toS:'Arrivée',myloc:'Ma position comme départ',swap:'Départ ⇄ Arrivée',
  fuel:'Carburant (plusieurs choix possibles – le moins cher par station compte)',diesel:'Gazole',buf:'Rayon autour du trajet (km)',maxAge:'Âge maximal du prix',
  d1:'1 jour',d2:'2 jours',d3:'3 jours',d7:'7 jours',d0:'sans limite',maxp:'Prix maximal :',all:'tous les prix',of:'sur',
  onlySold:'Seulement les stations qui vendent un carburant choisi',noAuto:'Masquer les stations d’autoroute (aires)',go:'Calculer l’itinéraire et les prix',
- foot:'Distance = distance la plus courte à vol d’oiseau jusqu’au trajet, pas le détour. « A » = station d’autoroute. Les prix de plus de 3 jours sont en rouge. Vérifiez toujours le prix à la pompe.',
+ foot:'Distance = distance la plus courte à vol d’oiseau jusqu’au trajet, pas le détour. « A » = station d’autoroute. Les prix de plus de 3 jours sont en rouge. Vérifiez toujours le prix à la pompe. Portée = km le long du trajet jusqu’à la station + la distance du trajet à la station ; gardez une marge de sécurité.',
  cheap:'Bon marché',dear:'Cher',esri:'Esri plan',start:'Départ',dest:'Arrivée',
  empty:'{l} est vide',badCoord:'Coordonnées invalides pour {l}',geoFail:'Échec de la recherche du lieu (HTTP {s})',notFound:'{l} « {q} » introuvable ; essayez un nom plus précis ou une adresse',
  sPlaces:'Recherche des lieux…',sRoute:'Calcul de l’itinéraire…',routeHttp:'Le service d’itinéraire répond HTTP {s}',noRoute:'Aucun itinéraire trouvé ({c})',
@@ -131,12 +136,12 @@ fr:{title:'Faire le plein sur votre trajet',h1:'Carburant le long de votre traje
  filt:'Filtre actif : {n} stations jusqu’à € {p}',fromRoute:'{d} km du trajet',along:'km {a} sur {t}',auto24:'automate 24/24',noPrices:'Aucun prix',rupt:'Rupture temporaire',
  priceOf:'prix {f} du {d}',na:'n.d.',none:'Aucune station trouvée avec ces filtres.',noGeo:'Votre navigateur ne fournit pas de position.',locating:'Localisation…',
  locFail:'Position indisponible ({m}). Autorisez la localisation ou saisissez un lieu.'},
-en:{title:'Fuel along your route',h1:'Fuel along your route',sub:'Live data from prix-carburants.gouv.fr · route via OSRM',
+en:{range:'Remaining range (km)',track:'Show my position',trackOff:'Hide my position',youAt:'Your position: km {a} of the route ({d} km off it).',offRoute:'You are {d} km from the route; distances are counted from the start.',reachTo:' Range up to km {e} of {t}.',inRange:'{n} stations within range',noneInRange:'No station within your range with these filters!',ahead:'in {x} km',rangeEnd:'End of range',me:'My position',passed:' Stations you have already passed are hidden.',title:'Fuel along your route',h1:'Fuel along your route',sub:'Live data from prix-carburants.gouv.fr · route via OSRM',
  from:'From (place, address or lat, lon)',to:'To',fromS:'From',toS:'To',myloc:'Use my location as start',swap:'From ⇄ To',
  fuel:'Fuel (several allowed – the cheapest per station counts)',diesel:'Diesel',buf:'Distance from route (km)',maxAge:'Maximum price age',
  d1:'1 day',d2:'2 days',d3:'3 days',d7:'7 days',d0:'no limit',maxp:'Maximum price:',all:'all prices',of:'of',
  onlySold:'Only stations selling a selected fuel',noAuto:'Hide motorway stations (aires)',go:'Get route and prices',
- foot:'Distance = shortest straight-line distance to the route, not the detour. "A" = motorway station. Prices older than 3 days are shown in red. Always check the price at the pump.',
+ foot:'Distance = shortest straight-line distance to the route, not the detour. "A" = motorway station. Prices older than 3 days are shown in red. Always check the price at the pump. Range = km along the route to the station + the station’s distance from the route; keep a safety margin.',
  cheap:'Cheap',dear:'Expensive',esri:'Esri street map',start:'Start',dest:'Destination',
  empty:'{l} is empty',badCoord:'Invalid coordinates for {l}',geoFail:'Place lookup failed (HTTP {s})',notFound:'{l} "{q}" not found; try a more precise name or an address',
  sPlaces:'Looking up places…',sRoute:'Calculating route…',routeHttp:'Routing service returned HTTP {s}',noRoute:'No route found ({c})',
@@ -164,6 +169,7 @@ const legend=L.control({position:'bottomright'});
 legend.onAdd=()=>{const d=L.DomUtil.create('div','legend');d.id='legend';return d};
 legend.addTo(map);
 
+let pos=null, watchId=null, posLayer=null, rangeMk=null, lastPosRender=null, centred=false;
 let routeLayer=null, stationLayer=L.layerGroup().addTo(map), route=null, stations=null, markers={}, maxPrice=null, ends=null, stat=null;
 
 function status(k,p,err){stat={k,p,err};const e=$('status');e.textContent=k?t(k,p):'';e.className=err?'err':''}
@@ -172,6 +178,8 @@ function showWhere(){$('where').innerHTML=ends?esc(t('fromS'))+': <b>'+esc(ends[
 function applyLang(){
   document.documentElement.lang=lang;document.title=t('title');
   document.querySelectorAll('[data-i]').forEach(el=>el.textContent=t(el.dataset.i));
+  if(watchId!=null)$('track').textContent=t('trackOff');
+  if(posLayer)posLayer.getLayers()[1].setTooltipContent(t('me'));
   for(const b of $('lang').children)b.setAttribute('aria-pressed',b.dataset.l===lang);
   $('legend').innerHTML=esc(t('cheap'))+'<i></i>'+esc(t('dear'));
   if(layerCtl)map.removeControl(layerCtl);
@@ -281,7 +289,11 @@ function render(){
   const best=s=>{let b=null;for(const k of fs){const v=s[k+'_prix'];if(v==null)continue;if(maxAge>0&&ageDays(s[k+'_maj'])>maxAge)continue;if(b===null||v<b.p)b={f:k,p:v,m:s[k+'_maj']}}return b};
   for(const s of stations)s._b=best(s);
   const fnames=fs.map(fname).join(' + ');
-  let sel=stations.filter(s=>s.d<=buf&&(!noA||s.pop!=='A'));
+  // eigen positie op de route en actieradius
+  let posAlong=null,posOff=null;
+  if(pos){const[d,a]=nearest(pos.la,pos.lo,route.c,route.cum,null);posOff=d;if(d<=20)posAlong=a}
+  const rng=parseFloat($('range').value),hasR=isFinite(rng)&&rng>0,ref=posAlong??0,endKm=ref+(hasR?rng:0);
+  let sel=stations.filter(s=>s.d<=buf&&(!noA||s.pop!=='A')&&(posAlong==null||s.along>=posAlong-0.5)&&(!hasR||(s.along-ref)+s.d<=rng));
   const total=sel.length;
   if(only)sel=sel.filter(s=>s._b);
   sel.sort((x,y)=>x.along-y.along);
@@ -308,6 +320,17 @@ function render(){
     (prices.length?` · ${t('min')} <b>€ ${num(lo,3)}</b> · ${t('med')} <b>€ ${num(med,3)}</b> · ${t('max')} <b>€ ${num(hi,3)}</b>`:'')+
     (maxPrice!=null?'<br>'+esc(t('filt',{n:shown,p:num(maxPrice,3)})):'');
 
+  // positie-info en markering einde actieradius
+  const pi=$('posinfo');let ptxt='';
+  if(pos)ptxt=posAlong!=null?t('youAt',{a:posAlong.toFixed(0),d:num(posOff,1)})+t('passed'):t('offRoute',{d:num(posOff,0)});
+  if(hasR)ptxt+=(ptxt?' ':'')+t('reachTo',{e:Math.min(endKm,route.km).toFixed(0),t:route.km.toFixed(0)}).trim()+' '+t('inRange',{n:shown})+'.';
+  pi.textContent=ptxt;pi.className=hasR&&!shown?'warn':'';
+  if(hasR&&!shown)pi.textContent+=' '+t('noneInRange');
+  if(rangeMk){map.removeLayer(rangeMk);rangeMk=null}
+  if(hasR&&endKm<route.km){const cu=route.cum,cc=route.c;let i=1;while(i<cu.length-1&&cu[i]<endKm)i++;const f=(endKm-cu[i-1])/((cu[i]-cu[i-1])||1);
+    const ll=[cc[i-1][1]+f*(cc[i][1]-cc[i-1][1]),cc[i-1][0]+f*(cc[i][0]-cc[i-1][0])];
+    rangeMk=L.circleMarker(ll,{radius:9,color:'#fff',weight:3,fillColor:'#d7191c',fillOpacity:1}).bindTooltip(t('rangeEnd')+' (km '+endKm.toFixed(0)+')',{permanent:true,direction:'right'}).addTo(map)}
+
   stationLayer.clearLayers();markers={};
   for(const s of sel){
     const b=s._b,p=b?b.p:null,has=p!=null,col=has?color(tnorm(p)):'#8a90a0';
@@ -330,7 +353,7 @@ function render(){
       <div class="km">km ${s.along.toFixed(0)}</div>
       <div class="nm">${esc(s.ville)}${s.pop==='A'?'<span class="tag a">A</span>':''}${cheap.has(s.id)?'<span class="tag">top 3</span>':''}</div>
       <div><span class="pr" style="background:${has?color(tnorm(p)):'#8a90a0'}">${has?fname(b.f)+' € '+num(p,3):esc(t('na'))}</span></div>
-      <div class="ad">${esc(s.adresse)} · ${esc(t('fromRoute',{d:num(s.d,1)}))} · <span class="${old?'old':''}">${has?esc(t('priceOf',{f:fname(b.f),d:fmtDate(b.m)})):''}</span><br><a href="https://maps.apple.com/?daddr=${s.la},${s.lo}&amp;dirflg=d" target="_blank" rel="noopener">Apple Maps</a><a href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.la},${s.lo}" target="_blank" rel="noopener">Google Maps</a></div>
+      <div class="ad">${posAlong!=null?'<b>'+esc(t('ahead',{x:(s.along-posAlong).toFixed(0)}))+'</b> · ':''}${esc(s.adresse)} · ${esc(t('fromRoute',{d:num(s.d,1)}))} · <span class="${old?'old':''}">${has?esc(t('priceOf',{f:fname(b.f),d:fmtDate(b.m)})):''}</span><br><a href="https://maps.apple.com/?daddr=${s.la},${s.lo}&amp;dirflg=d" target="_blank" rel="noopener">Apple Maps</a><a href="https://www.google.com/maps/dir/?api=1&amp;destination=${s.la},${s.lo}" target="_blank" rel="noopener">Google Maps</a></div>
     </div>`}).join(''):'<div style="padding:16px">'+esc(t('none'))+'</div>';
 }
 
@@ -355,6 +378,25 @@ function selFuels(){const c=[...document.querySelectorAll('#fuels input')];let v
 $('fuels').addEventListener('change',e=>{const c=[...document.querySelectorAll('#fuels input')];if(!c.some(x=>x.checked))e.target.checked=true;maxPrice=null;render()});
 ['buf','onlySold','noAuto','maxAge'].forEach(id=>$(id).addEventListener('change',render));
 $('maxp').addEventListener('input',e=>{maxPrice=+e.target.value;render()});
+$('range').addEventListener('input',()=>{maxPrice=null;render()});
+// live positie: blauwe stip + nauwkeurigheidscirkel; opnieuw berekenen bij >200 m verplaatsing of na 20 s
+$('track').addEventListener('click',()=>{
+  const b=$('track');
+  if(watchId!=null){navigator.geolocation.clearWatch(watchId);watchId=null;pos=null;if(posLayer){map.removeLayer(posLayer);posLayer=null}
+    b.setAttribute('aria-pressed','false');b.textContent=t('track');render();return}
+  if(!navigator.geolocation){status('noGeo',null,true);return}
+  b.setAttribute('aria-pressed','true');b.textContent=t('trackOff');centred=false;
+  watchId=navigator.geolocation.watchPosition(p=>{
+    pos={la:p.coords.latitude,lo:p.coords.longitude,acc:p.coords.accuracy};
+    const ll=[pos.la,pos.lo];
+    if(!posLayer){posLayer=L.layerGroup([L.circle(ll,{radius:pos.acc,color:'#1a73e8',weight:1,fillOpacity:.12}),L.marker(ll,{icon:L.divIcon({className:'',html:'<div class="me"></div>',iconSize:[22,22],iconAnchor:[11,11]}),zIndexOffset:2000}).bindTooltip(t('me'))]).addTo(map)}
+    else{const[c,m]=posLayer.getLayers();c.setLatLng(ll);c.setRadius(pos.acc);m.setLatLng(ll)}
+    if(!centred){centred=true;map.setView(ll,Math.max(map.getZoom(),11))}
+    const now=Date.now();
+    if(!lastPosRender||now-lastPosRender.t>20000||map.distance(ll,lastPosRender.ll)>200){lastPosRender={t:now,ll};render()}
+  },e=>{status('locFail',{m:e.message},true);navigator.geolocation.clearWatch(watchId);watchId=null;b.setAttribute('aria-pressed','false');b.textContent=t('track')},
+  {enableHighAccuracy:true,maximumAge:10000,timeout:30000});
+});
 status('loading');applyLang();
 load();
 }
